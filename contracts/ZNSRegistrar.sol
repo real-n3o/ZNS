@@ -25,8 +25,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   ZNSStaking public znsStaking;
   bool public initialized;
 
-  // To Do: Add resolver contract to struct
-  // To Do: Add subdomainRegistrar contract to struct
+  // To Do: + resolver contract to struct
+  // To Do: + subdomainRegistrar contract to struct
 
   /**
    * @dev Stores information about a registered domain.

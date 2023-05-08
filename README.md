@@ -20,5 +20,7 @@ truffle compile
 # Run Truffle tests
 truffle test
 
-License
+```
+
+## License
 This project is licensed under the MIT License.

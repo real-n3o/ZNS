@@ -1,6 +1,6 @@
 {
   "name": "zns",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "zNS - The Zero Name Service",
   "main": "index.js",
   "scripts": {
@@ -11,11 +11,6 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.3",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
-    "chai": "^4.3.7",
-    "ethers": "^6.3.0",
-    "truffle-assertions": "^0.9.2",
-    "util": "^0.12.5",
-    "utils": "^0.3.1",
     "web3": "^1.9.0"
   },
   "devDependencies": {

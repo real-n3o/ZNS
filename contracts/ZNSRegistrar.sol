@@ -202,8 +202,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   }
 
   /**
-    * @dev Checks to 
-    * @param domainName Whether or not the domainis available.
+    * @dev Checks to see whether or not a domainis is available.
+    * @param domainName The domain to check.
     * @return bool
   */
   function isDomainAvailable(string memory domainName) public view returns (bool) {

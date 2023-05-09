@@ -9,6 +9,41 @@
 
 pragma solidity ^0.8.0;
 
+// Overall, the ZNS system is designed in a similar way to what we have,
+// but is still missing important parts like domain resolvers,
+// where a domain content is tied to the domain name and token. It is also
+// missing a good connection between contracts and some integrity based in the
+// way certain flows are written. There's now way to easily improve pricing
+// strategies without significant code and storage changes, requiring an on-chain upgrade.
+// Addition of these modules will trigger changes in the way data is stored currently.
+// Some of the flows are inefficiently split between modules in a way where responsibility
+// is not always clear.
+
+// In this system design the base settlement storage is located on the Token contract,
+// which makes it a form of Registry combined with the Token functionality,
+// which may prove to be hard to maintain over long-term. Any changes required to the way
+// data is stored or managed will require a full-on upgrade of the token contract, which is not
+// a good strategy. Ideally, the token code should be only related to tokens,
+// and system storage being separate, so that changes to the system require minimal changes
+// for the token code. It may not be possible to avoid touching token code at all,
+// but possible changes should be minimized at the design stage.
+// Upgrading token code on-chain is one of the most dangerous and risky operations for web3 apps,
+// so if possible, it should be avoided.
+
+// The system so far has no notion of Access Control and can very easily be exploited,
+// by breaking down flows that need to be atomic into pieces creating multiple discrepancies in the system
+// data and the way it operates.
+// Access control will bring complexity and possibly more storage changes.
+// Integer IDs and strings are used to indetify domains, which do not provide
+// a convenient way of dealing with SC data off-chain and on the contracts, strings also
+// make many operations more expensive and harder to maintain over the long term.
+// IMO hashes should be used to identify domains, and tokenIDs should be derived from hashes,
+// negating the need for additional storage to bind those together.
+// Simple integer IDs for domains can also cause all sorts of errors and improper testing
+// because these values can be easily misread or confused with any other number value,
+// making certain tests not catch possible errors.
+// Number IDs are also very easy to find or calculate for any attack strategy, if applicable.
+
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";

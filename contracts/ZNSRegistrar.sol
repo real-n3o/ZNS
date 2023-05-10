@@ -142,10 +142,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   */
   function mintDomain(string memory domainName) public nonReentrant {
     // Check if the domain name already exists
-    // instead of reading the whole struct, which is 2 slots,
-    // we can just read only tokenID field and save half of the gas
-    Domain storage existingDomain = _domains[domainName];
-    require(existingDomain.tokenId == 0, "ZNSRegistrar: Domain name already exists with tokenId ");
+    uint256 existingDomainId = _domains[domainName].tokenId;
+    require(existingDomainId == 0, "ZNSRegistrar: Domain name already exists with tokenId ");
 
     // Ensure that the staking contract address is valid
     // this should be checked once when this state var is set in storage

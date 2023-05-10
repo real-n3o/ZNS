@@ -129,10 +129,15 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   event DomainDestroyed(uint256 indexed tokenId, string domainName);
 
   function __ZNSRegistrar_init(ZNSDomain _znsDomain, IERC20Upgradeable _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) internal {
-    // no addresses are checked
+    // Check that the addresses are not the zero address
+    require(_znsDomain != ZNSDomain(address(0)), "Invalid ZNSDomain address");
+    require(_zeroToken != IERC20Upgradeable(address(0)), "Invalid ZeroToken address");
+    require(_znsStaking != ZNSStaking(address(0)), "Invalid ZNSStaking address");
+    
     znsDomain = _znsDomain;
     zeroToken = _zeroToken;
     znsStaking = _znsStaking;
+    
     domainCost = _domainCost;
   }
 

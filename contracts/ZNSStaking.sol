@@ -55,7 +55,6 @@ contract ZNSStaking is Initializable {
     @dev Initializes the contract with the addresses of ZNS domains and staking tokens.
   */
   function initialize(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) public initializer {
-    require(!_initialized, "ZNSStaking: Contract is already initialized");
     __ZNSStaking_init(_znsDomain, _stakingToken);
   }
 

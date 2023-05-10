@@ -146,11 +146,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param domainName The name of the domain to be minted
   */
   function mintDomain(string memory domainName) public nonReentrant {
-    // not a necessary gas cost addition here, since `transfer()` functions will revert if insufficient balance
-    require(zeroToken.balanceOf(msg.sender) >= domainCost, "ZNSRegistrar: Insufficient Zero Token balance");
-    // same here, functions in the standard check this already
-    require(zeroToken.allowance(msg.sender, address(this)) >= domainCost, "ZNSRegistrar: Token allowance not sufficient");
-
     // Check if the domain name already exists
     // instead of reading the whole struct, which is 2 slots,
     // we can just read only tokenID field and save half of the gas

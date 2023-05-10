@@ -60,7 +60,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   ZNSDomain public znsDomain;
   IERC20Upgradeable public zeroToken;
   ZNSStaking public znsStaking;
-  bool public initialized;
 
   // To Do: + resolver contract to struct
   // To Do: + subdomainRegistrar contract to struct
@@ -116,9 +115,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param _domainCost The cost of registering a domain in Zero Tokens
   */
   function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
-    // the `initializer` modifier ensures this function can only be called once
-    // so this is not necessary
-    require(!initialized, "ZNSRegistrar: Contract is already initialized");
     // this contract can be avoided to save on deploy costs
     // if the code in state updating functions is written properly
     __ReentrancyGuard_init();
@@ -138,7 +134,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     zeroToken = _zeroToken;
     znsStaking = _znsStaking;
     domainCost = _domainCost;
-    initialized = true;
   }
 
   /**

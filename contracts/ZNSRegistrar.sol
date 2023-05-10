@@ -192,16 +192,10 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     // Check if the sender is the owner of the domain
     require(znsDomain.ownerOf(tokenId) == msg.sender, "Only the domain owner can withdraw staked tokens");
 
-    // Withdraw the stake
-    // delete first, update all storage, then withdraw
-    // otherwise we are open to reentrancy attacks
-    znsStaking.withdrawStake(tokenId, msg.sender);
-
-    // Delete the domain from the _domains mapping
+    // Delete and withdraw the stake
     delete _domains[domainName];
-
-    // Delete the mapping between token ID and domain name
     delete _tokenIdsToDomains[tokenId];
+    znsStaking.withdrawStake(tokenId, msg.sender);
 
     // Burn the domain
     znsDomain.burn(tokenId, msg.sender);

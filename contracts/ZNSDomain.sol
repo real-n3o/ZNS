@@ -21,7 +21,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   // using simple counter is imo not sufficient, we need to use a hash of the domain name
   // IDs as counters are easy to find and will break the sequence anyway after any domain has been revoked
   CountersUpgradeable.Counter private _domainIds;
-  bool public initialized; // this var is already present in Initializable.sol
 
   mapping(uint256 => string) private _tokenURIs; // not sure why this is needed, this is already accounted for in ERC721Upgradeable.sol
 
@@ -29,9 +28,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @dev Initializes the contract.
   */
   function initialize() public initializer {
-    require(!initialized, "ZNSDomain: Contract is already initialized");
     __ERC721_init("Zero Name Service (ZNS)", "ZNS");
-    initialized = true;
   }
 
   /**
@@ -77,9 +74,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @return The URI of the domain metadata.
   */
   function getTokenURI(uint256 tokenId) public view returns (string memory) {
-    // this is not necessary here. we are paying for a storage read that is not needed
-    // if token does not exist, this will just return zero
-    require(_exists(tokenId), "ZNSDomain: URI query for nonexistent token");
     return _tokenURIs[tokenId];
   }
 
@@ -95,7 +89,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @dev Burns a domain.
    * @param tokenId The ID of the domain to burn.
   */
-    function burn(uint256 tokenId, address owner) public {
+  function burn(uint256 tokenId, address owner) public {
     require(_isApprovedOrOwner(owner, tokenId), "ZNSDomain: caller is not owner nor approved");
     _burn(tokenId);
   }
@@ -107,21 +101,10 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
     The caller must be approved or owner of the token.
     The token must exist.
   */
-    function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
-      // this function is strange to me a little.
-      // we burn the token anyway, but decrement only if we supplied the URI before
-      // which is also required in `mintDomain()`.
-      // I think we should either put all ops under the if or just leave the check
-      // to the `ERC721._burn()`.
-      // we need to make sure that a token can not be created without providing
-      // the URI, otherwise we have discrepancy between domains and tokens
-      // it seems that this check is already done in `mintDomain()`, so, IMO
-      // this if is not needed here.
-      super._burn(tokenId);
-      if (bytes(_tokenURIs[tokenId]).length != 0) {
-      delete _tokenURIs[tokenId];
-      _domainIds.decrement();
-    }
+  function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
+    super._burn(tokenId);
+    delete _tokenURIs[tokenId];
+    _domainIds.decrement();
   }
 
   uint256[49] private __gap;

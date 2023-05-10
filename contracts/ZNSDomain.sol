@@ -79,9 +79,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   /**
     @dev Internal function to burn a domain.
     @param tokenId uint256 ID of the token to be burned.
-    Requirements:
-    The caller must be approved or owner of the token.
-    The token must exist.
   */
   function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
     super._burn(tokenId);

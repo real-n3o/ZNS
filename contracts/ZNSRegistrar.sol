@@ -193,16 +193,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     return _domains[domainName].tokenId;
   }
 
-  // /**
-  //   * @dev Gets the token URI associated with the given domain name.
-  //   * @param domainName The name of the domain to get the token URI for.
-  //   * @return The token URI of the domain.
-  // */
-  // function domainNameToTokenURI(string memory domainName) public view returns (string memory) {
-  //   // To Do: Return actual domain
-  //   return znsDomain.getTokenURI();
-  // }
-
   // To Do: Possibly offload to a separate pricing contract for upgradeability/modularity
 
   /**

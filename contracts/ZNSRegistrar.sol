@@ -49,6 +49,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./ZNSDomain.sol";
 import "./ZNSStaking.sol";
 
@@ -178,9 +179,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     delete _domains[domainName];
     delete _tokenIdsToDomains[tokenId];
     znsStaking.withdrawStake(tokenId, msg.sender);
-
-    // Burn the domain
-    znsDomain.burn(tokenId, msg.sender);
 
     // Emit the event
     emit DomainDestroyed(tokenId, domainName);

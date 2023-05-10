@@ -12,6 +12,8 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import { ZNSDomain } from "./ZNSDomain.sol";
+
 /**
  * @title ZNSStaking
  * @dev Staking contract for Zero Name Service (ZNS) domains.
@@ -23,15 +25,11 @@ contract ZNSStaking is Initializable {
     uint256 amount;
     // why is this value needed? it doesn't seem to be used anywhere in code
     uint256 startTime;
-    // we can just get owner from the token contract
-    // the existence of this might create discrepancy in the system
-    // unless there's a specific purpose for having this different from the token owner
-    address ownerOf;
   }
 
   mapping(uint256 => Stake) public stakes;
 
-  IERC721Upgradeable public znsDomain;
+  ZNSDomain public znsDomain;
   IERC20Upgradeable public stakingToken;
 
   /**
@@ -54,12 +52,12 @@ contract ZNSStaking is Initializable {
   /**
     @dev Initializes the contract with the addresses of ZNS domains and staking tokens.
   */
-  function initialize(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) public initializer {
+  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken) public initializer {
     __ZNSStaking_init(_znsDomain, _stakingToken);
   }
 
-  function __ZNSStaking_init(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) internal {
-    require(_znsDomain != IERC721Upgradeable(address(0)), "Invalid ZNSDomain address");
+  function __ZNSStaking_init(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken) internal {
+    require(_znsDomain != ZNSDomain(address(0)), "Invalid ZNSDomain address");
     require(_stakingToken != IERC20Upgradeable(address(0)), "Invalid ZNSDomain address");
 
     znsDomain = _znsDomain;
@@ -71,15 +69,15 @@ contract ZNSStaking is Initializable {
     Only the owner of the domain can add a stake.
   */
   // function is not protected
-  function addStake(uint256 tokenId, uint256 domainCost, address recipient) public {
+  function addStake(uint256 tokenId, uint256 domainCost) public {
     // Transfer funds to the recipient to the staking contract
     SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
 
     // Add stake to the mapping with msg.sender as the owner
-    stakes[tokenId] = Stake(domainCost, block.timestamp, recipient);
+    stakes[tokenId] = Stake(domainCost, block.timestamp);
 
     // Emit event
-    emit StakeAdded(tokenId, domainCost, block.timestamp, recipient);
+    emit StakeAdded(tokenId, domainCost, block.timestamp, znsDomain.ownerOf(tokenId));
   }
 
   /**
@@ -87,32 +85,24 @@ contract ZNSStaking is Initializable {
     Only the owner of the domain can withdraw the stake.
     The recipient address must not be 0.
   */
-  // this function makes it possible to withdraw your stake without burning the token
-  // so a user can register a domain, pay for it, then take his money back and still keep the domain.
-  // another thing here is that it is enough to know who owns the domain to withdraw the stake for someone else,
-  // creating discrepancy in the system. anybody can call this
-  // as long as they know the owner of the stake which they can pull from this same contract.
-  function withdrawStake(uint256 tokenId, address recipient) public {
-    require(znsDomain.ownerOf(tokenId) == recipient, "ZNSStaking: Only the domain owner can withdraw stake");
-    require(recipient != address(0), "ZNSStaking: Recipient address cannot be zero");
+  function withdrawStake(uint256 tokenId) public {
+    require(znsDomain.ownerOf(tokenId) == tx.origin, "ZNSStaking: Only the domain owner can withdraw stake");
+    require(tx.origin != address(0), "ZNSStaking: Recipient address cannot be zero");
 
     // Check that the stake exists for tokenID + recipient
     Stake memory stake = stakes[tokenId];
-    // if there's a reason to have this check in place - there's something fishy with the system code
-    // this should technically not be possible that a stake for an existing domain is not present
-    require(stake.amount > 0, "ZNSStaking: No stake found for the given tokenId");
-    // why do we need to check both owner here (token + stake)?
-    // is there a reason they are different? and in what case they can be different?
-    require(stake.ownerOf == recipient, "ZNSStaking: Only the owner of the stake can withdraw it");
 
     // Remove stake from mapping
     delete stakes[tokenId];
 
+    // Burn the domain
+    znsDomain.burn(tokenId, tx.origin);
+
     // Transfer tokens back to domain owner
-    SafeERC20Upgradeable.safeTransfer(stakingToken, recipient, stake.amount);
+    SafeERC20Upgradeable.safeTransfer(stakingToken, tx.origin, stake.amount);
 
     // Emit event
-    emit StakeWithdrawn(tokenId, stake.amount, recipient);
+    emit StakeWithdrawn(tokenId, stake.amount, tx.origin);
   }
 
   // For storage layout future-proofing

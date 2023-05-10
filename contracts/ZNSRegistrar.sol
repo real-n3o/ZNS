@@ -137,7 +137,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     znsDomain = _znsDomain;
     zeroToken = _zeroToken;
     znsStaking = _znsStaking;
-    
     domainCost = _domainCost;
   }
 
@@ -149,16 +148,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     // Check if the domain name already exists
     uint256 existingDomainId = _domains[domainName].tokenId;
     require(existingDomainId == 0, "ZNSRegistrar: Domain name already exists with tokenId ");
-
-    // Ensure that the staking contract address is valid
-    // this should be checked once when this state var is set in storage
-    // here it will impose unnecessary extra gas costs for every single transaction
-    // we are paying for a state read + check here
-    require(address(znsStaking) != address(0), "ZNSRegistrar: Invalid staking contract address");
-
-    // Transfer tokens from sender directly to staking contract using SafeERC20
-    // imo Staking contract should do this along with updating it's state
-    SafeERC20Upgradeable.safeTransferFrom(zeroToken, msg.sender, address(znsStaking), domainCost);
 
     // Mint the domain
     // why do we need both of the below calls? we should be able to do this in one

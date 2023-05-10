@@ -62,7 +62,9 @@ contract ZNSStaking is Initializable {
   }
 
   function __ZNSStaking_init(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) internal {
-    // no addresses are checked here, which can create all sorts of errors in prod
+    require(_znsDomain != IERC721Upgradeable(address(0)), "Invalid ZNSDomain address");
+    require(_stakingToken != IERC20Upgradeable(address(0)), "Invalid ZNSDomain address");
+
     znsDomain = _znsDomain;
     stakingToken = _stakingToken;
   }
@@ -70,37 +72,17 @@ contract ZNSStaking is Initializable {
   /**
     @dev Adds a stake to the contract for the given domain tokenId.
     Only the owner of the domain can add a stake.
-    The amount of stake to be added must be greater than 0.
-    The unallocated stake in the contract must be greater than or equal to the amount of stake to be added.
   */
   // function is not protected
-  function addStake(uint256 tokenId, uint256 amount, address recipient) public {
-    // this is an interesting case. I wonder if this can fail at any point with
-    // some changes to contracts since owner is being assigned to the token in the same transaction.
-    // In any way, it's better to take the stake first, then assign the owner to reduce reentrancy risk,
-    // which would make this check fail every time.
-    require(znsDomain.ownerOf(tokenId) == recipient, "ZNSStaking: Only the domain owner can add stake");
-    // since this comes from Registrar, the value corresponding to it is `domainCost`,
-    // which should be checked at the Registrar level upon setting it to storage
-    // making this check redundant. we would prefer that over this check,
-    // since this imposes an unnecessary gas cost on the user.
-    // we do not want to check this every time a stake is added.
-    require(amount > 0, "ZNSStaking: Amount must be greater than 0");
-
-    // this is not a good flow, in my opinion, and can create problems down the line.
-    // this contract should withdraw the stake by itself, not rely on another module to do it.
-    // when we do it this way, this check is not needed, since it is already
-    // not giving us clear picture. these unallocated funds can be anything in theory,
-    // so relying on this is not safe.
-    // Check that the unallocated stake is enough for the stake being added
-    uint256 unallocatedStake = stakingToken.balanceOf(address(this));
-    require(unallocatedStake >= amount, "ZNSStaking: Insufficient unallocated stake");
+  function addStake(uint256 tokenId, uint256 domainCost, address recipient) public {
+    // Transfer funds to the recipient to the staking contract
+    SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
 
     // Add stake to the mapping with msg.sender as the owner
-    stakes[tokenId] = Stake(amount, block.timestamp, recipient);
+    stakes[tokenId] = Stake(domainCost, block.timestamp, recipient);
 
     // Emit event
-    emit StakeAdded(tokenId, amount, block.timestamp, recipient);
+    emit StakeAdded(tokenId, domainCost, block.timestamp, recipient);
   }
 
   /**

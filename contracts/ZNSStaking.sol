@@ -18,7 +18,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 */
 contract ZNSStaking is Initializable {
   using SafeMathUpgradeable for uint256;
-  bool private _initialized;
 
   struct Stake {
     uint256 amount;
@@ -58,7 +57,6 @@ contract ZNSStaking is Initializable {
   function initialize(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) public initializer {
     require(!_initialized, "ZNSStaking: Contract is already initialized");
     __ZNSStaking_init(_znsDomain, _stakingToken);
-    _initialized = true;
   }
 
   function __ZNSStaking_init(IERC721Upgradeable _znsDomain, IERC20Upgradeable _stakingToken) internal {

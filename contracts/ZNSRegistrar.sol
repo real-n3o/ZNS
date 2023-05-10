@@ -68,13 +68,11 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   /**
    * @dev Stores information about a registered domain.
    * @param tokenId The token ID of the NFT representing the domain.
-   * @param tokenURI The metadata URI of the NFT representing the domain.
   */
   // by using domain hashes and tokenID created from those + native ERC721 tokenURI management
   // we can avoid this storage structure altogether along with the mapping below
   struct Domain {
     uint256 tokenId;
-    string tokenURI;
   }
 
   // using strings on contracts in this way is not the best idea
@@ -146,9 +144,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   /**
     @dev Mints a new domain
     @param domainName The name of the domain to be minted
-    @param tokenURI The URI of the domain token
   */
-  function mintDomain(string memory domainName, string memory tokenURI) public nonReentrant {
+  function mintDomain(string memory domainName) public nonReentrant {
     // not a necessary gas cost addition here, since `transfer()` functions will revert if insufficient balance
     require(zeroToken.balanceOf(msg.sender) >= domainCost, "ZNSRegistrar: Insufficient Zero Token balance");
     // same here, functions in the standard check this already
@@ -172,9 +169,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
 
     // Mint the domain
     // why do we need both of the below calls? we should be able to do this in one
-    uint256 newDomainId = znsDomain.mintDomain(msg.sender, tokenURI);
-    znsDomain.setTokenURI(newDomainId, tokenURI);
-    _domains[domainName] = Domain(newDomainId, tokenURI);
+    uint256 newDomainId = znsDomain.mintDomain(msg.sender);
+    _domains[domainName] = Domain(newDomainId);
 
     // Store mapping between token ID and domain name
     _tokenIdsToDomains[newDomainId] = domainName;
@@ -232,33 +228,33 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @param domainName The name of the domain to get the token URI for.
     * @return The token URI of the domain.
   */
-  function domainNameToTokenURI(string memory domainName) public view returns (string memory) {
-    // same here. not necessary
-    require(_domains[domainName].tokenId != 0, "ZNSRegistrar: Domain name does not exist");
-    return _domains[domainName].tokenURI;
-  }
+  // function domainNameToTokenURI(string memory domainName) public view returns (string memory) {
+  //   // same here. not necessary
+  //   require(_domains[domainName].tokenId != 0, "ZNSRegistrar: Domain name does not exist");
+  //   return _domains[domainName].tokenURI;
+  // }
 
-  /**
-    * @dev Updates the token URI of a given domain.
-    * @param tokenId The ID of the domain to update the token URI of.
-    * @param newTokenURI The new token URI for the domain.
-  */
-  function updateTokenURI(uint256 tokenId, string calldata newTokenURI) external {
-    // Check if the sender is the owner of the domain
-    require(znsDomain.ownerOf(tokenId) == msg.sender, "Caller is not the owner of the domain");
+  // /**
+  //   * @dev Updates the token URI of a given domain.
+  //   * @param tokenId The ID of the domain to update the token URI of.
+  //   * @param newTokenURI The new token URI for the domain.
+  // */
+  // function updateTokenURI(uint256 tokenId, string calldata newTokenURI) external {
+  //   // Check if the sender is the owner of the domain
+  //   require(znsDomain.ownerOf(tokenId) == msg.sender, "Caller is not the owner of the domain");
 
-    // Get the old token URI
-    string memory oldTokenURI = znsDomain.tokenURI(tokenId);
+  //   // Get the old token URI
+  //   string memory oldTokenURI = znsDomain.tokenURI(tokenId);
 
-    // Update the token URI
-    znsDomain.setTokenURI(tokenId, newTokenURI);
+  //   // Update the token URI
+  //   znsDomain.setTokenURI(tokenId, newTokenURI);
 
-    // tokenURI is not updated anywhere on this contract's storage
-    // creating discrepancy in the system
+  //   // tokenURI is not updated anywhere on this contract's storage
+  //   // creating discrepancy in the system
 
-    // Emit the event
-    emit TokenURIUpdated(tokenId, oldTokenURI, newTokenURI);
-  }
+  //   // Emit the event
+  //   emit TokenURIUpdated(tokenId, oldTokenURI, newTokenURI);
+  // }
 
   // To Do: Possibly offload to a separate pricing contract for upgradeability/modularity
 

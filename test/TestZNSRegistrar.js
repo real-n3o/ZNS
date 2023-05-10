@@ -59,18 +59,15 @@ contract("ZNSRegistrar", accounts => {
     assert.equal(symbol, "ZNS", "ZNSDomain contract should have the correct symbol");
   });
 
-  it("should mint a domain and confirm tokenId and tokenURI were set correctly", async () => {
+  it("should mint a domain and confirm tokenId were set correctly", async () => {
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
     
     const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME);
     assert.equal(tokenId.toNumber(), 1, "Domain name should map to the correct token ID");
 
     const owner = await znsDomain.ownerOf(1);
     assert.equal(owner, accounts[0], "Domain owner should be the first account");
-
-    const tokenURI = await znsDomain.getTokenURI(tokenId);
-    assert.equal(tokenURI, DOMAIN_URI, "Token URI should be set to the expected value");
 
     const totalSupply = await znsDomain.totalSupply();
     assert.equal(totalSupply.toNumber(), 1, "Total supply should be increased by 1");
@@ -79,7 +76,7 @@ contract("ZNSRegistrar", accounts => {
   it("destroy domain and confirm stake was returned to owner", async () => {
     // Mint a domain
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
 
     // Check that supply has been updated correctly
     const totalSupplyAfterMint = await znsDomain.totalSupply();
@@ -113,9 +110,9 @@ contract("ZNSRegistrar", accounts => {
     assert.equal(totalSupplyAfterBurn.toNumber(), 0, "Total supply should be decreased by 1");
   });
 
-  it("should mint a second domain and confirm tokenId and tokenURI were set correctly", async () => {
+  it("should mint a second domain and confirm tokenId were set correctly", async () => {
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME_1, DOMAIN_URI_1);
+    await znsRegistrar.mintDomain(DOMAIN_NAME_1);
     
     const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME_1);
     assert.equal(tokenId.toNumber(), 1, "Domain name should map to the correct token ID");
@@ -123,22 +120,19 @@ contract("ZNSRegistrar", accounts => {
     const owner = await znsDomain.ownerOf(1);
     assert.equal(owner, accounts[0], "Domain owner should be the first account");
 
-    const tokenURI = await znsDomain.getTokenURI(tokenId);
-    assert.equal(tokenURI, DOMAIN_URI_1, "Token URI should be set to the expected value");
-
     const totalSupply = await znsDomain.totalSupply();
     assert.equal(totalSupply.toNumber(), 1, "Total supply should be increased by 1");
   });
 
   it("should set/get proper domain id for when multiple domains are minted", async () => {
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
     
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME_1, DOMAIN_URI_1);
+    await znsRegistrar.mintDomain(DOMAIN_NAME_1);
 
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME_2, DOMAIN_URI_2);
+    await znsRegistrar.mintDomain(DOMAIN_NAME_2);
 
     const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME_2);
     assert.equal(tokenId.toNumber(), 3, "Domain name should map to the correct token ID");
@@ -150,7 +144,7 @@ contract("ZNSRegistrar", accounts => {
   it("should transfer domain ownership from existing to new owner", async () => {
     // Mint the domain
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
 
     // Get the tokenId
     const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME);
@@ -176,7 +170,7 @@ contract("ZNSRegistrar", accounts => {
 
     // Mint a domain with the new domain cost
     await zeroToken.approve(znsRegistrar.address, updatedDomainCost, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
 
     // Confirm the domain was minted
     const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME);
@@ -186,7 +180,7 @@ contract("ZNSRegistrar", accounts => {
   it("should update the tokenURI after a domain has been minted", async () => {
     // Mint a domain
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
 
     // Update the tokenURI
     const NEW_DOMAIN_URI = "https://newdomain.com";
@@ -203,7 +197,7 @@ contract("ZNSRegistrar", accounts => {
   it("should check to see if a domain is available", async () => {
     // Mint a domain
     await zeroToken.approve(znsRegistrar.address, DOMAIN_COST, { from: accounts[0] });
-    await znsRegistrar.mintDomain(DOMAIN_NAME, DOMAIN_URI);
+    await znsRegistrar.mintDomain(DOMAIN_NAME);
 
     // Check if the domain is available
     const isAvailable = await znsRegistrar.isDomainAvailable(DOMAIN_NAME);

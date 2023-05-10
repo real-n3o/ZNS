@@ -6,10 +6,10 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { CountersUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
 /**
  * @title ZNSDomain
@@ -34,15 +34,13 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   /**
    * @dev Mint a new domain.
    * @param to The address to mint the domain to.
-   * @param tokenURI The URI of the domain metadata. // why are we passing tokenUri here?
    * @return The ID of the newly minted domain.
   */
   // this functions is not protected, meaning anyone can come and mint a domain,
   // circumventing the Registrar contract and it's required flows (payments, Registrar state update, etc.)
-  function mintDomain(address to, string memory tokenURI) external returns (uint256) {
+  function mintDomain(address to) external returns (uint256) {
     // Validate inputs
     require(to != address(0), "ZNSDomain: Invalid address");
-    require(bytes(tokenURI).length > 0, "ZNSDomain: Token URI is empty");
 
     // Increment domain ID
     _domainIds.increment();
@@ -50,10 +48,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
     // Mint new domain + set token URI
     uint256 newDomainId = _domainIds.current();
     _safeMint(to, newDomainId);
-    // is there a reason we are setting URIs for tokens individually?
-    // a good practice is having a base URI and then appending the token ID to it
-    // do we want to keep token data in different places for the same collection?
-    setTokenURI(newDomainId, tokenURI);
 
     return newDomainId;
   }

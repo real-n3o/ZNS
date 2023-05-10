@@ -89,9 +89,6 @@ contract ZNSStaking is Initializable {
     // Remove stake from mapping
     delete stakes[tokenId];
 
-    // Burn the domain
-    znsDomain.burn(tokenId, tx.origin);
-
     // Transfer tokens back to domain owner
     SafeERC20Upgradeable.safeTransfer(stakingToken, tx.origin, stakedAmount);
 

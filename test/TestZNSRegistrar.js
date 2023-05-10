@@ -33,7 +33,6 @@ contract("ZNSRegistrar", accounts => {
       "ZERO"
     );
     await zeroToken.mint(accounts[0], 1000000000000000);
-    await znsDomain.initialize();
     await znsStaking.initialize(
       znsDomain.address, 
       zeroToken.address
@@ -43,7 +42,10 @@ contract("ZNSRegistrar", accounts => {
       zeroToken.address, 
       znsStaking.address, 
       DOMAIN_COST
-    );   
+    );  
+    await znsDomain.initialize(
+      znsRegistrar.address
+    );
   });
 
   it("should have valid Ethereum addresses for znsDomain, znsRegistrar, znsStaking and zeroToken", async () => {

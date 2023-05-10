@@ -11,6 +11,8 @@ import { CountersUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/C
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 
+import { ZNSRegistrar } from "./ZNSRegistrar.sol";
+
 /**
  * @title ZNSDomain
  * @dev ERC721 contract for Zero Name Service (ZNS) domains.
@@ -21,12 +23,20 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   // using simple counter is imo not sufficient, we need to use a hash of the domain name
   // IDs as counters are easy to find and will break the sequence anyway after any domain has been revoked
   CountersUpgradeable.Counter private _domainIds;
+  
+  address private znsRegistrarAddress;
+
+  modifier onlyRegistrar {
+    require(msg.sender == znsRegistrarAddress, "ZNSDomain: Only the ZNSRegistrar can call this function");
+    _;
+  }
 
   /**
    * @dev Initializes the contract.
   */
-  function initialize() public initializer {
+  function initialize(address _znsRegistrar) public initializer {
     __ERC721_init("Zero Name Service (ZNS)", "ZNS");
+    znsRegistrarAddress = _znsRegistrar;
   }
 
   /**
@@ -34,10 +44,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @param to The address to mint the domain to.
    * @return The ID of the newly minted domain.
   */
-  // [Discuss]
-  // this functions is not protected, meaning anyone can come and mint a domain,
-  // circumventing the Registrar contract and it's required flows (payments, Registrar state update, etc.)
-  function mintDomain(address to) external returns (uint256) {
+  function mintDomain(address to) external onlyRegistrar returns (uint256) {
     // Validate inputs
     require(to != address(0), "ZNSDomain: Invalid address");
 
@@ -72,7 +79,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @dev Burns a domain.
    * @param tokenId The ID of the domain to burn.
   */
-  function burn(uint256 tokenId, address owner) public {
+  function burn(uint256 tokenId, address owner) external onlyRegistrar {
     require(_isApprovedOrOwner(owner, tokenId), "ZNSDomain: caller is not owner nor approved");
     _burn(tokenId);
   }

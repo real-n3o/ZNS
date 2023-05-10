@@ -61,18 +61,16 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   ZEROToken public zeroToken;
   ZNSStaking public znsStaking;
 
-  // To Do: + resolver contract to struct
-  // To Do: + subdomainRegistrar contract to struct
-
   /**
    * @dev Stores information about a registered domain.
    * @param tokenId The token ID of the NFT representing the domain.
   */
-  // by using domain hashes and tokenID created from those + native ERC721 tokenURI management
-  // we can avoid this storage structure altogether along with the mapping below
   struct Domain {
-    uint256 tokenId;
+    uint256 tokenId; // using domain hashes we can avoid this storage here
+    address domainAddress; // To Do: + domain contract getters/setters
+    address resolverAddress; // To Do: + resolver contract getters/setters
   }
+
   // [ FIX ]
   // using strings on contracts in this way is not the best idea
   // string are all different lengths and can be very long
@@ -150,7 +148,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
 
     // Mint the domain
     uint256 newDomainId = znsDomain.mintDomain(msg.sender);
-    _domains[domainName] = Domain(newDomainId);
+    _domains[domainName] = Domain(newDomainId, address(0), address(0));
 
     // Add stake
     znsStaking.addStake(newDomainId, domainCost);
@@ -163,14 +161,15 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @param domainName The ID of the domain to be destroyed.
   */
   function destroyDomain(string calldata domainName) public {
-    uint256 tokenId = _domains[domainName].tokenId;
-
     // Check if the sender is the owner of the domain
+    uint256 tokenId = _domains[domainName].tokenId;
     require(znsDomain.ownerOf(tokenId) == msg.sender, "Only the domain owner can withdraw staked tokens");
 
-    // Delete and withdraw the stake
+    // Delete, burn and withdraw the stake
     delete _domains[domainName];
     znsStaking.withdrawStake(tokenId);
+    znsDomain.burn(tokenId, msg.sender);
+    // NOTE: May need to move this into ZNSStaking contract
 
     // Emit the event
     emit DomainDestroyed(tokenId, domainName);

@@ -23,8 +23,6 @@ contract ZNSStaking is Initializable {
 
   struct Stake {
     uint256 amount;
-    // why is this value needed? it doesn't seem to be used anywhere in code
-    uint256 startTime;
   }
 
   mapping(uint256 => Stake) public stakes;
@@ -36,10 +34,9 @@ contract ZNSStaking is Initializable {
     * @dev Emitted when stake is added to a domain.
     * @param tokenId The ID of the domain that had stake added to it.
     * @param amount The amount of stake added to the domain.
-    * @param startTime The time when the stake was added.
     * @param ownerOf The address of the owner of the domain.
   */
-  event StakeAdded(uint256 indexed tokenId, uint256 amount, uint256 startTime, address ownerOf);
+  event StakeAdded(uint256 indexed tokenId, uint256 amount, address ownerOf);
 
   /**
     * @dev Emitted when stake is withdrawn from a domain.
@@ -74,10 +71,10 @@ contract ZNSStaking is Initializable {
     SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
 
     // Add stake to the mapping with msg.sender as the owner
-    stakes[tokenId] = Stake(domainCost, block.timestamp);
+    stakes[tokenId] = Stake(domainCost);
 
     // Emit event
-    emit StakeAdded(tokenId, domainCost, block.timestamp, znsDomain.ownerOf(tokenId));
+    emit StakeAdded(tokenId, domainCost, znsDomain.ownerOf(tokenId));
   }
 
   /**

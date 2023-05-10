@@ -159,7 +159,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     _tokenIdsToDomains[newDomainId] = domainName;
 
     // Add stake
-    znsStaking.addStake(newDomainId, domainCost, msg.sender);
+    znsStaking.addStake(newDomainId, domainCost);
 
     emit DomainMinted(newDomainId, domainName, msg.sender);
   }
@@ -178,7 +178,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     // Delete and withdraw the stake
     delete _domains[domainName];
     delete _tokenIdsToDomains[tokenId];
-    znsStaking.withdrawStake(tokenId, msg.sender);
+    znsStaking.withdrawStake(tokenId);
 
     // Emit the event
     emit DomainDestroyed(tokenId, domainName);

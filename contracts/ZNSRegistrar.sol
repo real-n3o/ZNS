@@ -44,14 +44,13 @@ pragma solidity ^0.8.0;
 // making certain tests not catch possible errors.
 // Number IDs are also very easy to find or calculate for any attack strategy, if applicable.
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "./ZNSDomain.sol";
-import "./ZNSStaking.sol";
+import { ZNSDomain } from "./ZNSDomain.sol";
+import { ZNSStaking } from "./ZNSStaking.sol";
+import { ZEROToken } from "./ZEROToken.sol";
 
 contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
@@ -59,7 +58,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   // this state slot will be dead forever, which is not a big deal, but should be considered
   uint256 public domainCost;
   ZNSDomain public znsDomain;
-  IERC20Upgradeable public zeroToken;
+  ZEROToken public zeroToken;
   ZNSStaking public znsStaking;
 
   // To Do: + resolver contract to struct
@@ -115,7 +114,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param _znsStaking The address of the ZNSStaking contract
     @param _domainCost The cost of registering a domain in Zero Tokens
   */
-  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
+  function initialize(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
     // this contract can be avoided to save on deploy costs
     // if the code in state updating functions is written properly
     __ReentrancyGuard_init();
@@ -129,10 +128,10 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   */
   event DomainDestroyed(uint256 indexed tokenId, string domainName);
 
-  function __ZNSRegistrar_init(ZNSDomain _znsDomain, IERC20Upgradeable _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) internal {
+  function __ZNSRegistrar_init(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) internal {
     // Check that the addresses are not the zero address
     require(_znsDomain != ZNSDomain(address(0)), "Invalid ZNSDomain address");
-    require(_zeroToken != IERC20Upgradeable(address(0)), "Invalid ZeroToken address");
+    require(_zeroToken != ZEROToken(address(0)), "Invalid ZeroToken address");
     require(_znsStaking != ZNSStaking(address(0)), "Invalid ZNSStaking address");
     
     znsDomain = _znsDomain;

@@ -6,11 +6,11 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import { ZNSDomain } from "./ZNSDomain.sol";
 
@@ -21,11 +21,7 @@ import { ZNSDomain } from "./ZNSDomain.sol";
 contract ZNSStaking is Initializable {
   using SafeMathUpgradeable for uint256;
 
-  struct Stake {
-    uint256 amount;
-  }
-
-  mapping(uint256 => Stake) public stakes;
+  mapping(uint256 => uint256) public stakes;
 
   ZNSDomain public znsDomain;
   IERC20Upgradeable public stakingToken;
@@ -71,7 +67,7 @@ contract ZNSStaking is Initializable {
     SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
 
     // Add stake to the mapping with msg.sender as the owner
-    stakes[tokenId] = Stake(domainCost);
+    stakes[tokenId] = domainCost;
 
     // Emit event
     emit StakeAdded(tokenId, domainCost, znsDomain.ownerOf(tokenId));
@@ -87,7 +83,7 @@ contract ZNSStaking is Initializable {
     require(tx.origin != address(0), "ZNSStaking: Recipient address cannot be zero");
 
     // Check that the stake exists for tokenID + recipient
-    Stake memory stake = stakes[tokenId];
+    uint256 stakedAmount = stakes[tokenId];
 
     // Remove stake from mapping
     delete stakes[tokenId];
@@ -96,10 +92,10 @@ contract ZNSStaking is Initializable {
     znsDomain.burn(tokenId, tx.origin);
 
     // Transfer tokens back to domain owner
-    SafeERC20Upgradeable.safeTransfer(stakingToken, tx.origin, stake.amount);
+    SafeERC20Upgradeable.safeTransfer(stakingToken, tx.origin, stakedAmount);
 
     // Emit event
-    emit StakeWithdrawn(tokenId, stake.amount, tx.origin);
+    emit StakeWithdrawn(tokenId, stakedAmount, tx.origin);
   }
 
   // For storage layout future-proofing

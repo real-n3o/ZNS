@@ -22,8 +22,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   // IDs as counters are easy to find and will break the sequence anyway after any domain has been revoked
   CountersUpgradeable.Counter private _domainIds;
 
-  mapping(uint256 => string) private _tokenURIs; // not sure why this is needed, this is already accounted for in ERC721Upgradeable.sol
-
   /**
    * @dev Initializes the contract.
   */
@@ -45,21 +43,11 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
     // Increment domain ID
     _domainIds.increment();
 
-    // Mint new domain + set token URI
+    // Mint new domain 
     uint256 newDomainId = _domainIds.current();
     _safeMint(to, newDomainId);
 
     return newDomainId;
-  }
-
-  /**
-   * @dev Sets the URI of the domain metadata.
-   * @param tokenId The ID of the domain to set the URI for.
-   * @param tokenURI The new URI for the domain metadata.
-  */
-  function setTokenURI(uint256 tokenId, string memory tokenURI) public {
-    require(_exists(tokenId), "ZNSDomain: URI set of nonexistent token");
-    _tokenURIs[tokenId] = tokenURI;
   }
 
   /**
@@ -68,7 +56,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @return The URI of the domain metadata.
   */
   function getTokenURI(uint256 tokenId) public view returns (string memory) {
-    return _tokenURIs[tokenId];
+    return super.tokenURI(tokenId);
   }
 
   /**
@@ -97,7 +85,6 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   */
   function _burn(uint256 tokenId) internal override(ERC721Upgradeable) {
     super._burn(tokenId);
-    delete _tokenURIs[tokenId];
     _domainIds.decrement();
   }
 

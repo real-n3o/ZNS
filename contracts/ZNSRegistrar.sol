@@ -216,44 +216,17 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @return The token ID of the domain.
   */
   function domainNameToTokenId(string memory domainName) public view returns (uint256) {
-    // no need for this check. it doesn't hurt, but if we use this in the contract code,
-    // we will pay extra gas for this check
-    // in the case of token not existing it should just return zero
-    require(_domains[domainName].tokenId != 0, "ZNSRegistrar: Domain name does not exist");
     return _domains[domainName].tokenId;
   }
 
-  /**
-    * @dev Gets the token URI associated with the given domain name.
-    * @param domainName The name of the domain to get the token URI for.
-    * @return The token URI of the domain.
-  */
-  // function domainNameToTokenURI(string memory domainName) public view returns (string memory) {
-  //   // same here. not necessary
-  //   require(_domains[domainName].tokenId != 0, "ZNSRegistrar: Domain name does not exist");
-  //   return _domains[domainName].tokenURI;
-  // }
-
   // /**
-  //   * @dev Updates the token URI of a given domain.
-  //   * @param tokenId The ID of the domain to update the token URI of.
-  //   * @param newTokenURI The new token URI for the domain.
+  //   * @dev Gets the token URI associated with the given domain name.
+  //   * @param domainName The name of the domain to get the token URI for.
+  //   * @return The token URI of the domain.
   // */
-  // function updateTokenURI(uint256 tokenId, string calldata newTokenURI) external {
-  //   // Check if the sender is the owner of the domain
-  //   require(znsDomain.ownerOf(tokenId) == msg.sender, "Caller is not the owner of the domain");
-
-  //   // Get the old token URI
-  //   string memory oldTokenURI = znsDomain.tokenURI(tokenId);
-
-  //   // Update the token URI
-  //   znsDomain.setTokenURI(tokenId, newTokenURI);
-
-  //   // tokenURI is not updated anywhere on this contract's storage
-  //   // creating discrepancy in the system
-
-  //   // Emit the event
-  //   emit TokenURIUpdated(tokenId, oldTokenURI, newTokenURI);
+  // function domainNameToTokenURI(string memory domainName) public view returns (string memory) {
+  //   // To Do: Return actual domain
+  //   return znsDomain.getTokenURI();
   // }
 
   // To Do: Possibly offload to a separate pricing contract for upgradeability/modularity

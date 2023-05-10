@@ -93,12 +93,9 @@ contract("ZNSRegistrar", accounts => {
     assert.notEqual(domainId, 0, "Domain does not exist");
   
     const balanceBefore = await zeroToken.balanceOf.call(accounts[0]);
-  
-    // Get domain tokenID
-    const tokenId = await znsRegistrar.domainNameToTokenId(DOMAIN_NAME);
 
     // Destroy the domain
-    await znsRegistrar.destroyDomain(tokenId, { from: accounts[0] });
+    await znsRegistrar.destroyDomain(DOMAIN_NAME, { from: accounts[0] });
   
     // Check that the tokens were returned to the owner
     const balanceAfter = await zeroToken.balanceOf.call(accounts[0]);

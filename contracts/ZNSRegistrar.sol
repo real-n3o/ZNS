@@ -73,7 +73,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   struct Domain {
     uint256 tokenId;
   }
-
+  // [ FIX ]
   // using strings on contracts in this way is not the best idea
   // string are all different lengths and can be very long
   // + clashes between names might be possible depending on the
@@ -82,8 +82,6 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   // is this a string for a full domain address or just the last level name?
   // can we differentiate the level of domain from this string?
   mapping(string => Domain) private _domains;
-  // this can be avoided as well by using the domain hash casted into uint256 as the tokenID
-  mapping(uint256 => string) private _tokenIdsToDomains;
 
   /**
     @dev Event emitted when a domain is minted
@@ -115,6 +113,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param _domainCost The cost of registering a domain in Zero Tokens
   */
   function initialize(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
+    // [Discuss]
     // this contract can be avoided to save on deploy costs
     // if the code in state updating functions is written properly
     __ReentrancyGuard_init();
@@ -150,12 +149,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     require(existingDomainId == 0, "ZNSRegistrar: Domain name already exists with tokenId ");
 
     // Mint the domain
-    // why do we need both of the below calls? we should be able to do this in one
     uint256 newDomainId = znsDomain.mintDomain(msg.sender);
     _domains[domainName] = Domain(newDomainId);
-
-    // Store mapping between token ID and domain name
-    _tokenIdsToDomains[newDomainId] = domainName;
 
     // Add stake
     znsStaking.addStake(newDomainId, domainCost);
@@ -165,18 +160,16 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
 
   /**
     * @dev Destroys a domain.
-    * @param tokenId The ID of the domain to be destroyed.
+    * @param domainName The ID of the domain to be destroyed.
   */
-  function destroyDomain(uint256 tokenId) public {
-    // Look up domain name by token ID
-    string memory domainName = _tokenIdsToDomains[tokenId];
+  function destroyDomain(string calldata domainName) public {
+    uint256 tokenId = _domains[domainName].tokenId;
 
     // Check if the sender is the owner of the domain
     require(znsDomain.ownerOf(tokenId) == msg.sender, "Only the domain owner can withdraw staked tokens");
 
     // Delete and withdraw the stake
     delete _domains[domainName];
-    delete _tokenIdsToDomains[tokenId];
     znsStaking.withdrawStake(tokenId);
 
     // Emit the event
@@ -208,6 +201,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @param domainName The domain to check.
     * @return bool
   */
+  // [Discuss]
   // the function is here, but not used by anything on this contract.
   // there can be a case made to make an internal function + external view function
   // the external will use the internal one under the hood + the internal can be used

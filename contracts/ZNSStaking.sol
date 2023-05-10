@@ -61,6 +61,7 @@ contract ZNSStaking is Initializable {
     @dev Adds a stake to the contract for the given domain tokenId.
     Only the owner of the domain can add a stake.
   */
+  // [Discuss]
   // function is not protected
   function addStake(uint256 tokenId, uint256 domainCost) public {
     // Transfer funds to the recipient to the staking contract

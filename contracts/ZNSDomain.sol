@@ -34,6 +34,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @param to The address to mint the domain to.
    * @return The ID of the newly minted domain.
   */
+  // [Discuss]
   // this functions is not protected, meaning anyone can come and mint a domain,
   // circumventing the Registrar contract and it's required flows (payments, Registrar state update, etc.)
   function mintDomain(address to) external returns (uint256) {

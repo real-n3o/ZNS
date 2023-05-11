@@ -21,7 +21,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   using SafeMathUpgradeable for uint256;
   using CountersUpgradeable for CountersUpgradeable.Counter;
   CountersUpgradeable.Counter private _domainIds;
-  
+
   address private znsRegistrarAddress;
 
   modifier onlyRegistrar {

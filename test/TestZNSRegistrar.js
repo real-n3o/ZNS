@@ -33,16 +33,17 @@ contract("ZNSRegistrar", accounts => {
       "ZERO"
     );
     await zeroToken.mint(accounts[0], 1000000000000000);
-    await znsStaking.initialize(
-      znsDomain.address, 
-      zeroToken.address
-    );
     await znsRegistrar.initialize(
       znsDomain.address, 
       zeroToken.address, 
       znsStaking.address, 
       DOMAIN_COST
     );  
+    await znsStaking.initialize(
+      znsDomain.address, 
+      zeroToken.address,
+      znsRegistrar.address
+    );
     await znsDomain.initialize(
       znsRegistrar.address
     );

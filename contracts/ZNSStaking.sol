@@ -13,6 +13,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import { ZNSDomain } from "./ZNSDomain.sol";
+import { ZNSRegistrar } from "./ZNSRegistrar.sol";
 
 /**
  * @title ZNSStaking
@@ -25,6 +26,7 @@ contract ZNSStaking is Initializable {
 
   ZNSDomain public znsDomain;
   IERC20Upgradeable public stakingToken;
+  address private znsRegistrarAddress;
 
   /**
     * @dev Emitted when stake is added to a domain.
@@ -42,11 +44,17 @@ contract ZNSStaking is Initializable {
   */
   event StakeWithdrawn(bytes32 indexed domainHash, uint256 amount, address indexed recipient);
 
+  modifier onlyRegistrar {
+    require(msg.sender == znsRegistrarAddress, "ZNSDomain: Only the ZNSRegistrar can call this function");
+    _;
+  }
+
   /**
     @dev Initializes the contract with the addresses of ZNS domains and staking tokens.
   */
-  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken) public initializer {
+  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken, address _znsRegistrar) public initializer {
     __ZNSStaking_init(_znsDomain, _stakingToken);
+    znsRegistrarAddress = _znsRegistrar;
   }
 
   function __ZNSStaking_init(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken) internal {
@@ -61,8 +69,7 @@ contract ZNSStaking is Initializable {
     @dev Adds a stake to the contract for the given domain tokenId.
     Only the owner of the domain can add a stake.
   */
-  // To Do: function is not protected
-  function addStake(bytes32 domainHash, uint256 domainCost) public {
+  function addStake(bytes32 domainHash, uint256 domainCost) onlyRegistrar public {
     // Transfer funds to the recipient to the staking contract
     SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
 
@@ -79,7 +86,7 @@ contract ZNSStaking is Initializable {
     Only the owner of the domain can withdraw the stake.
     The recipient address must not be 0.
   */
-  function withdrawStake(bytes32 domainHash) public {
+  function withdrawStake(bytes32 domainHash) onlyRegistrar public {
     uint256 tokenId = uint256(domainHash);
 
     require(znsDomain.ownerOf(tokenId) == tx.origin, "ZNSStaking: Only the domain owner can withdraw stake");

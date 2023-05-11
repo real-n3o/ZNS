@@ -20,8 +20,6 @@ import { ZNSRegistrar } from "./ZNSRegistrar.sol";
 contract ZNSDomain is Initializable, ERC721Upgradeable {
   using SafeMathUpgradeable for uint256;
   using CountersUpgradeable for CountersUpgradeable.Counter;
-  // using simple counter is imo not sufficient, we need to use a hash of the domain name
-  // IDs as counters are easy to find and will break the sequence anyway after any domain has been revoked
   CountersUpgradeable.Counter private _domainIds;
   
   address private znsRegistrarAddress;
@@ -42,20 +40,11 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
   /**
    * @dev Mint a new domain.
    * @param to The address to mint the domain to.
-   * @return The ID of the newly minted domain.
+  * @param to The tokenID of the new domain.
   */
-  function mintDomain(address to) external onlyRegistrar returns (uint256) {
-    // Validate inputs
-    require(to != address(0), "ZNSDomain: Invalid address");
-
-    // Increment domain ID
+  function mintDomain(address to, uint256 tokenId) external onlyRegistrar {
+    _safeMint(to, tokenId);
     _domainIds.increment();
-
-    // Mint new domain 
-    uint256 newDomainId = _domainIds.current();
-    _safeMint(to, newDomainId);
-
-    return newDomainId;
   }
 
   /**

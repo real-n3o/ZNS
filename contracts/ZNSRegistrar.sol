@@ -9,29 +9,10 @@
 
 pragma solidity ^0.8.0;
 
-//  * It is also missing a good connection between contracts and some integrity based in the
-// way certain flows are written. 
-
-// * There's now way to easily improve pricing strategies without significant code and storage changes, 
-// requiring an on-chain upgrade. Addition of these modules will trigger changes in the way data is stored currently.
-// Some of the flows are inefficiently split between modules in a way where responsibility is not always clear.
-
-// In this system design the base settlement storage is located on the Token contract,
-// which makes it a form of Registry combined with the Token functionality,
-// which may prove to be hard to maintain over long-term. 
-
-// * Any changes required to the way data is stored or managed will require a full-on upgrade of the token contract, 
-// which is not a good strategy. Ideally, the token code should be only related to tokens,
-// and system storage being separate, so that changes to the system require minimal changes
-// for the token code.
-
-// * The system so far has no notion of Access Control and can very easily be exploited,
-// by breaking down flows that need to be atomic into pieces creating multiple discrepancies in the system
-// data and the way it operates. Access control will bring complexity and possibly more storage changes.
-
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { ZNSDomain } from "./ZNSDomain.sol";
 import { ZNSStaking } from "./ZNSStaking.sol";
@@ -39,8 +20,8 @@ import { ZEROToken } from "./ZEROToken.sol";
 
 contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
-  // if any changes to pricing model are needed later with upgrades and storage changes,
-  // this state slot will be dead forever, which is not a big deal, but should be considered
+  using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
+
   uint256 public domainCost;
   ZNSDomain public znsDomain;
   ZEROToken public zeroToken;
@@ -51,28 +32,20 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
    * @param tokenId The token ID of the NFT representing the domain.
   */
   struct Domain {
-    uint256 tokenId; // using domain hashes we can avoid this storage here
+    address owner;
     address domainAddress; // To Do: + domain contract getters/setters
     address resolverAddress; // To Do: + resolver contract getters/setters
   }
 
-  // [ FIX ]
-  // using strings on contracts in this way is not the best idea
-  // string are all different lengths and can be very long
-  // + clashes between names might be possible depending on the
-  // encoding table used. also working with strings is harder and more
-  // gas comsuming in Solidity. bytes is a preferred method.
-  // is this a string for a full domain address or just the last level name?
-  // can we differentiate the level of domain from this string?
-  mapping(string => Domain) private _domains;
+  mapping(bytes32 => Domain) private _domains;
 
   /**
     @dev Event emitted when a domain is minted
-    @param tokenId The ID of the minted domain
+    @param domainHash The hash of the minted domain
     @param domainName The name of the minted domain
     @param owner The address of the domain owner
   */
-  event DomainMinted(uint256 indexed tokenId, string indexed domainName, address indexed owner);
+  event DomainMinted(bytes32 indexed domainHash, string domainName, address indexed owner);
 
   /**
     * @dev Emitted when the token URI of a domain is updated.
@@ -89,6 +62,13 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   event DomainCostSet(uint256 newDomainCost);
 
   /**
+    * @dev Emitted when a domain is destroyed.
+    * @param domainHash The hash of the destroyed domain.
+    * @param domainName The name of the destroyed domain.
+  */
+  event DomainDestroyed(bytes32 indexed domainHash, string domainName);
+
+  /**
     @dev Initializes the ZNSRegistrar contract
     @param _znsDomain The address of the ZNSDomain contract
     @param _zeroToken The address of the ZEROToken contract
@@ -96,19 +76,9 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param _domainCost The cost of registering a domain in Zero Tokens
   */
   function initialize(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
-    // [Discuss]
-    // this contract can be avoided to save on deploy costs
-    // if the code in state updating functions is written properly
     __ReentrancyGuard_init();
     __ZNSRegistrar_init(_znsDomain, _zeroToken, _znsStaking, _domainCost);
   }
-
-  /**
-    * @dev Emitted when a domain is destroyed.
-    * @param tokenId The ID of the destroyed domain.
-    * @param domainName The name of the destroyed domain.
-  */
-  event DomainDestroyed(uint256 indexed tokenId, string domainName);
 
   function __ZNSRegistrar_init(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) internal {
     // Check that the addresses are not the zero address
@@ -128,36 +98,43 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   */
   function mintDomain(string memory domainName) public nonReentrant {
     // Check if the domain name already exists
-    uint256 existingDomainId = _domains[domainName].tokenId;
-    require(existingDomainId == 0, "ZNSRegistrar: Domain name already exists with tokenId ");
+    require(isDomainAvailable(domainName) == true, "ZNSRegistrar: Domain name already exists with tokenId");
+    bytes32 domainHash = hashDomainName(domainName);
+    uint256 tokenId = uint256(domainHash);
 
     // Mint the domain
-    uint256 newDomainId = znsDomain.mintDomain(msg.sender);
-    _domains[domainName] = Domain(newDomainId, address(0), address(0));
+    znsDomain.mintDomain(msg.sender, tokenId);
+    _domains[domainHash] = Domain(msg.sender, address(0), address(0));
 
     // Add stake
-    znsStaking.addStake(newDomainId, domainCost);
+    znsStaking.addStake(domainHash, domainCost);
 
-    emit DomainMinted(newDomainId, domainName, msg.sender);
+    emit DomainMinted(domainHash, domainName, msg.sender);
   }
 
   /**
     * @dev Destroys a domain.
     * @param domainName The ID of the domain to be destroyed.
   */
-  function destroyDomain(string calldata domainName) public {
+  function destroyDomain(string memory domainName) public {
+
+    bytes32 domainHash = hashDomainName(domainName);
+
     // Check if the sender is the owner of the domain
-    uint256 tokenId = _domains[domainName].tokenId;
+    uint256 tokenId = uint256(domainHash);
     require(znsDomain.ownerOf(tokenId) == msg.sender, "Only the domain owner can withdraw staked tokens");
 
+    // Set default owner to msg.sender
+    _domains[domainHash].owner == msg.sender;
+
     // Delete, burn and withdraw the stake
-    delete _domains[domainName];
-    znsStaking.withdrawStake(tokenId);
+    delete _domains[domainHash];
+    znsStaking.withdrawStake(domainHash);
     znsDomain.burn(tokenId, msg.sender);
     // NOTE: May need to move this into ZNSStaking contract but need to determine AC
 
     // Emit the event
-    emit DomainDestroyed(tokenId, domainName);
+    emit DomainDestroyed(domainHash, domainName);
   }
 
   /**
@@ -165,8 +142,10 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @param domainName The name of the domain to get the token ID for.
     * @return The token ID of the domain.
   */
-  function domainNameToTokenId(string memory domainName) public view returns (uint256) {
-    return _domains[domainName].tokenId;
+  function domainNameToTokenId(string memory domainName) public pure returns (uint256) {
+    bytes32 domainHash = hashDomainName(domainName);
+    uint256 tokenId = uint256(domainHash);
+    return tokenId;
   }
 
   // To Do: Possibly offload to a separate pricing contract for upgradeability/modularity
@@ -181,20 +160,24 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   }
 
   /**
-    * @dev Checks to see whether or not a domainis is available.
-    * @param domainName The domain to check.
-    * @return bool
+    * @dev Checks if a domain name is available for registration.
+    * @param domainName The domain name to check availability for.
+    * @return A boolean indicating whether the domain name is available (true) or not (false).
   */
-  // [Discuss]
-  // the function is here, but not used by anything on this contract.
-  // there can be a case made to make an internal function + external view function
-  // the external will use the internal one under the hood + the internal can be used
-  // in many checks on this contract instead of statements
-  // making it easier to maintain, by changing just one thing, instead of looking for individual
-  // checks in all functions where they appear
   function isDomainAvailable(string memory domainName) public view returns (bool) {
-    return _domains[domainName].tokenId == 0;
+    bytes32 domainHash = hashDomainName(domainName);
+    return _domains[domainHash].owner == address(0);
+  }
+
+  /**
+    * @dev Computes the hash value of a given domain name.
+    * @param domainName The domain name to be hashed.
+    * @return The hash value of the domain name.
+  */
+  function hashDomainName(string memory domainName) public pure returns (bytes32) {
+    return keccak256(bytes(domainName));
   }
 
   uint256[49] private __gap;
 }
+

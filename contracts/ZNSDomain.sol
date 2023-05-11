@@ -52,7 +52,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @param tokenId The ID of the domain to get the URI for.
    * @return The URI of the domain metadata.
   */
-  function getTokenURI(uint256 tokenId) public view returns (string memory) {
+  function getTokenURI(uint256 tokenId) external view returns (string memory) {
     return super.tokenURI(tokenId);
   }
 

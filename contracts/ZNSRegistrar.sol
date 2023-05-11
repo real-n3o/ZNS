@@ -23,9 +23,9 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
   uint256 public domainCost;
-  ZNSDomain public znsDomain;
-  ZEROToken public zeroToken;
-  ZNSStaking public znsStaking;
+  ZNSDomain private znsDomain;
+  ZEROToken private zeroToken;
+  ZNSStaking private znsStaking;
 
   /**
    * @dev Stores information about a registered domain.
@@ -75,7 +75,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     @param _znsStaking The address of the ZNSStaking contract
     @param _domainCost The cost of registering a domain in Zero Tokens
   */
-  function initialize(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) public initializer {
+  function initialize(ZNSDomain _znsDomain, ZEROToken _zeroToken, ZNSStaking _znsStaking, uint256 _domainCost) external initializer {
     __ReentrancyGuard_init();
     __ZNSRegistrar_init(_znsDomain, _zeroToken, _znsStaking, _domainCost);
   }
@@ -153,7 +153,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @dev Sets the cost of a domain.
     * @param _newDomainCost The new cost for a domain.
   */
-  function setDomainCost(uint256 _newDomainCost) public {
+  // Note: Need AC
+  function setDomainCost(uint256 _newDomainCost) external {
     domainCost = _newDomainCost;
     emit DomainCostSet(_newDomainCost);
   }

@@ -6,6 +6,7 @@
 
 pragma solidity ^0.8.0;
 
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -19,7 +20,7 @@ import { ZNSRegistrar } from "./ZNSRegistrar.sol";
  * @title ZNSStaking
  * @dev Staking contract for Zero Name Service (ZNS) domains.
 */
-contract ZNSStaking is Initializable {
+contract ZNSStaking is Initializable, ReentrancyGuardUpgradeable {
   using SafeMathUpgradeable for uint256;
 
   mapping(bytes32 => uint256) public stakes;
@@ -52,7 +53,7 @@ contract ZNSStaking is Initializable {
   /**
     @dev Initializes the contract with the addresses of ZNS domains and staking tokens.
   */
-  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken, address _znsRegistrar) public initializer {
+  function initialize(ZNSDomain _znsDomain, IERC20Upgradeable _stakingToken, address _znsRegistrar) external initializer {
     __ZNSStaking_init(_znsDomain, _stakingToken);
     znsRegistrarAddress = _znsRegistrar;
   }
@@ -69,9 +70,9 @@ contract ZNSStaking is Initializable {
     @dev Adds a stake to the contract for the given domain tokenId.
     Only the owner of the domain can add a stake.
   */
-  function addStake(bytes32 domainHash, uint256 domainCost) onlyRegistrar public {
+  function addStake(bytes32 domainHash, uint256 domainCost, address beneficiary) onlyRegistrar nonReentrant external {
     // Transfer funds to the recipient to the staking contract
-    SafeERC20Upgradeable.safeTransferFrom(stakingToken, tx.origin, address(this), domainCost);
+    SafeERC20Upgradeable.safeTransferFrom(stakingToken, beneficiary, address(this), domainCost);
 
     // Add stake to the mapping with msg.sender as the owner
     stakes[domainHash] = domainCost;
@@ -86,11 +87,11 @@ contract ZNSStaking is Initializable {
     Only the owner of the domain can withdraw the stake.
     The recipient address must not be 0.
   */
-  function withdrawStake(bytes32 domainHash) onlyRegistrar public {
+  function withdrawStake(bytes32 domainHash, address beneficiary) onlyRegistrar nonReentrant external {
     uint256 tokenId = uint256(domainHash);
 
-    require(znsDomain.ownerOf(tokenId) == tx.origin, "ZNSStaking: Only the domain owner can withdraw stake");
-    require(tx.origin != address(0), "ZNSStaking: Recipient address cannot be zero");
+    require(znsDomain.ownerOf(tokenId) == beneficiary, "ZNSStaking: Only the domain owner can withdraw stake");
+    require(beneficiary != address(0), "ZNSStaking: Recipient address cannot be zero");
 
     // Check that the stake exists for tokenID + recipient
     uint256 stakedAmount = stakes[domainHash];
@@ -99,10 +100,10 @@ contract ZNSStaking is Initializable {
     delete stakes[domainHash];
 
     // Transfer tokens back to domain owner
-    SafeERC20Upgradeable.safeTransfer(stakingToken, tx.origin, stakedAmount);
+    SafeERC20Upgradeable.safeTransfer(stakingToken, beneficiary, stakedAmount);
 
     // Emit event
-    emit StakeWithdrawn(domainHash, stakedAmount, tx.origin);
+    emit StakeWithdrawn(domainHash, stakedAmount, beneficiary);
   }
 
   // For storage layout future-proofing

@@ -110,7 +110,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     _domains[domainHash].owner == msg.sender;
 
     // Add stake
-    znsStaking.addStake(domainHash, domainCost);
+    znsStaking.addStake(domainHash, domainCost, msg.sender);
 
     emit DomainMinted(domainHash, domainName, msg.sender);
   }
@@ -119,7 +119,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @dev Destroys a domain.
     * @param domainName The ID of the domain to be destroyed.
   */
-  function destroyDomain(string memory domainName) public {
+  function destroyDomain(string memory domainName) public nonReentrant {
     bytes32 domainHash = hashDomainName(domainName);
 
     // Check if the sender is the owner of the domain
@@ -128,7 +128,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
 
     // Delete, burn and withdraw the stake
     delete _domains[domainHash];
-    znsStaking.withdrawStake(domainHash);
+    znsStaking.withdrawStake(domainHash, msg.sender);
     znsDomain.burn(tokenId, msg.sender);
     // NOTE: May need to move this into ZNSStaking contract but need to determine AC
 

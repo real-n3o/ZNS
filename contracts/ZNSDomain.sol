@@ -60,7 +60,7 @@ contract ZNSDomain is Initializable, ERC721Upgradeable {
    * @dev Gets the total number of domains minted.
    * @return The total number of domains minted.
   */
-  function totalSupply() public view returns (uint256) {
+  function totalSupply() external view returns (uint256) {
     return _domainIds.current();
   }
 

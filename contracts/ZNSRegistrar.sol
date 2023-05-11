@@ -39,6 +39,12 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
 
   mapping(bytes32 => Domain) private _domains;
 
+  modifier onlyOwner(bytes32 domainHash) {
+    uint256 tokenId = uint256(domainHash);
+    require(znsDomain.ownerOf(tokenId) == msg.sender, "ZNSRegistrar: Only the owner can call this function");
+    _;
+  }
+
   /**
     @dev Event emitted when a domain is minted
     @param domainHash The hash of the minted domain
@@ -167,6 +173,60 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   function isDomainAvailable(string memory domainName) public view returns (bool) {
     bytes32 domainHash = hashDomainName(domainName);
     return _domains[domainHash].owner == address(0);
+  }
+
+    /**
+    * @dev Gets the owner address of a domain.
+    * @param domainHash The hash of the domain.
+    * @return The owner address of the domain.
+  */
+  function getDomainOwner(bytes32 domainHash) public view returns (address) {
+      return _domains[domainHash].owner;
+  }
+
+  /**
+    * @dev Sets the owner address of a domain.
+    * @param domainHash The hash of the domain.
+    * @param owner The new owner address to set for the domain.
+  */
+  function setDomainOwner(bytes32 domainHash, address owner) onlyOwner(domainHash) internal {
+      _domains[domainHash].owner = owner;
+  }
+
+  /**
+    * @dev Gets the domain contract address of a domain.
+    * @param domainHash The hash of the domain.
+    * @return The domain contract address of the domain.
+  */
+  function getDomainContract(bytes32 domainHash) public view returns (address) {
+      return _domains[domainHash].domain;
+  }
+
+  /**
+    * @dev Sets the domain contract address of a domain.
+    * @param domainHash The hash of the domain.
+    * @param domain The new domain contract address to set for the domain.
+  */
+  function setDomainContract(bytes32 domainHash, address domain) onlyOwner(domainHash) internal {
+      _domains[domainHash].domain = domain;
+  }
+
+  /**
+    * @dev Gets the resolver contract address of a domain.
+    * @param domainHash The hash of the domain.
+    * @return The resolver contract address of the domain.
+  */
+  function getResolverContract(bytes32 domainHash) public view returns (address) {
+      return _domains[domainHash].resolver;
+  }
+
+  /**
+    * @dev Sets the resolver contract address of a domain.
+    * @param domainHash The hash of the domain.
+    * @param resolver The new resolver contract address to set for the domain.
+  */
+  function setResolverContract(bytes32 domainHash, address resolver) onlyOwner(domainHash) internal {
+      _domains[domainHash].resolver = resolver;
   }
 
   /**

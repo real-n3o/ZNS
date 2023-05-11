@@ -33,8 +33,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   */
   struct Domain {
     address owner;
-    address domainAddress; // To Do: + domain contract getters/setters
-    address resolverAddress; // To Do: + resolver contract getters/setters
+    address domain; // To Do: + domain contract getters/setters
+    address resolver; // To Do: + resolver contract getters/setters
   }
 
   mapping(bytes32 => Domain) private _domains;
@@ -106,6 +106,9 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     znsDomain.mintDomain(msg.sender, tokenId);
     _domains[domainHash] = Domain(msg.sender, address(0), address(0));
 
+    // Set default owner to msg.sender
+    _domains[domainHash].owner == msg.sender;
+
     // Add stake
     znsStaking.addStake(domainHash, domainCost);
 
@@ -117,15 +120,11 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     * @param domainName The ID of the domain to be destroyed.
   */
   function destroyDomain(string memory domainName) public {
-
     bytes32 domainHash = hashDomainName(domainName);
 
     // Check if the sender is the owner of the domain
     uint256 tokenId = uint256(domainHash);
     require(znsDomain.ownerOf(tokenId) == msg.sender, "Only the domain owner can withdraw staked tokens");
-
-    // Set default owner to msg.sender
-    _domains[domainHash].owner == msg.sender;
 
     // Delete, burn and withdraw the stake
     delete _domains[domainHash];

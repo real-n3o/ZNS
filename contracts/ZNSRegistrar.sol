@@ -33,8 +33,8 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
   */
   struct Domain {
     address owner;
-    address domain; // To Do: + domain contract getters/setters
-    address resolver; // To Do: + resolver contract getters/setters
+    address domain;
+    address resolver;
   }
 
   mapping(bytes32 => Domain) private _domains;
@@ -175,7 +175,7 @@ contract ZNSRegistrar is Initializable, ReentrancyGuardUpgradeable {
     return _domains[domainHash].owner == address(0);
   }
 
-    /**
+  /**
     * @dev Gets the owner address of a domain.
     * @param domainHash The hash of the domain.
     * @return The owner address of the domain.
